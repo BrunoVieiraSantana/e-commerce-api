@@ -79,15 +79,17 @@ const userController = {
             if (rows.length > 0) {
                 const user = rows[0];
                 const token = jwt.sign({ email: user.email, id: user.id_user, name: user.name }, secret, { expiresIn: '1h' });
-
+    
                 return res.status(200).json({ token });
             } else {
                 return res.status(401).json({ msg: "Unauthorized" });
             }
         } catch (error) {
-            res.status(500).json({ msg: error.message });
+            console.error(error);
+            res.status(500).json({ msg: "Internal Server Error" });
         }
     }
+    
 
 };
 
