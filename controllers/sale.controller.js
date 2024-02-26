@@ -24,11 +24,11 @@ const saleController = {
     },
     create: async (req, res) => {
         try {
-            const { user_id, product_id, purchase_date, purchase_price, status } = req.body;
+            const { user_id, product_id, purchase_date, purchase_price, quantity, status } = req.body;
 
-            const sql = 'INSERT INTO sales(user_id, product_id, purchase_date, purchase_price, status) VALUES($1, $2, $3, $4, $5) RETURNING *';
+            const sql = 'INSERT INTO sales(user_id, product_id, purchase_date, purchase_price, quantity, status) VALUES($1, $2, $3, $4, $5, $6) RETURNING *';
 
-            const { rows } = await postgre.query(sql, [user_id, product_id, purchase_date, purchase_price, status]);
+            const { rows } = await postgre.query(sql, [user_id, product_id, purchase_date, purchase_price, quantity, status]);
 
             res.json({ msg: "OK", data: rows[0] });
 
@@ -38,11 +38,11 @@ const saleController = {
     },
     updateById: async (req, res) => {
         try {
-            const { user_id, product_id, purchase_date, purchase_price, status } = req.body;
+            const { user_id, product_id, purchase_date, purchase_price, quantity, status } = req.body;
 
-            const sql = 'UPDATE sales SET user_id = $1, product_id = $2, purchase_date = $3, purchase_price = $4, status = $5 WHERE id_sale = $6 RETURNING *';
+            const sql = 'UPDATE sales SET user_id = $1, product_id = $2, purchase_date = $3, purchase_price = $4, quantity = $5, status = $6 WHERE id_sale = $7 RETURNING *';
 
-            const { rows } = await postgre.query(sql, [user_id, product_id, purchase_date, purchase_price, status, req.params.id]);
+            const { rows } = await postgre.query(sql, [user_id, product_id, purchase_date, purchase_price, quantity, status, req.params.id]);
 
             res.json({ msg: "OK", data: rows[0] });
         } catch (error) {
