@@ -8,7 +8,7 @@ const verifyToken = (req, res, next) => {
     const token = req.headers['authorization'];
 
 
-    const publicRoutes = ['/authenticate', '/', '/signup', '/signin']; 
+    const publicRoutes = ['/authenticate', '/', '/create']; 
 
 
     if (publicRoutes.includes(req.path)) {
@@ -36,5 +36,6 @@ router.get("/:id", verifyToken, userController.getById);
 router.put("/:id", verifyToken, userController.updateById);
 router.delete("/:id", verifyToken, userController.deleteById);
 router.post("/authenticate", userController.authenticateUser);
+router.post("/create", userController.create);
 
 module.exports = router;
