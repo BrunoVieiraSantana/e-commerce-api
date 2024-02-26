@@ -1,15 +1,12 @@
 const express = require("express");
 const router = express.Router();
 const jwt = require('jsonwebtoken');
-const secret = 'ecommerce_secret'; 
-
+const secret = 'ecommerce_secret';
 
 const verifyToken = (req, res, next) => {
     const token = req.headers['authorization'];
 
-
     const publicRoutes = ['/authenticate', '/', '/create']; 
-
 
     if (publicRoutes.includes(req.path)) {
         return next(); 
@@ -24,7 +21,11 @@ const verifyToken = (req, res, next) => {
             return res.status(401).json({ msg: 'Invalid token' });
         }
 
-        req.user = decoded;
+        req.user = {
+            email: decoded.email,
+            name: decoded.name
+        };
+
         next();
     });
 };
