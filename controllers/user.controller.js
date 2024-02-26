@@ -65,7 +65,26 @@ const userController = {
         } catch (error) {
             res.json({ msg: error.msg });
         }
+    },
+
+    authenticateUser: async (req, res) => {
+        try {
+            const { email, password } = req.body;
+
+            const query = 'SELECT * FROM users WHERE email = $1 AND password = $2';
+            const { rows } = await postgre.query(query, [email, password]);
+
+
+            if (rows.length > 0) {
+                return res.status(200).send();
+            } else {
+                return res.status(401).json({ msg: "Unauthorized" });
+            }
+        } catch (error) {
+            res.json({ msg: error.msg });
+        }
     }
+
 };
 
 module.exports = userController;
