@@ -76,15 +76,15 @@ const userController = {
             const query = 'SELECT * FROM users WHERE email = $1 AND password = $2';
             const { rows } = await postgre.query(query, [email, password]);
     
-            console.log("Rows:", rows); // Verifique os dados retornados pela consulta
+            console.log("Rows:", rows); 
     
             if (rows.length > 0) {
                 const user = rows[0];
-                console.log("User:", user); // Verifique os dados do usuário
+                console.log("User:", user); 
     
                 const token = jwt.sign({ email: user.email, id: user.id_user, name: user.name }, secret, { expiresIn: '1h' });
     
-                return res.status(200).json({ token });
+                return res.status(200).json({ token, name: user.name });
             } else {
                 return res.status(401).json({ msg: "Unauthorized" });
             }
@@ -93,6 +93,7 @@ const userController = {
             res.status(500).json({ msg: "Internal Server Error" });
         }
     }
+    
     
 
 };
