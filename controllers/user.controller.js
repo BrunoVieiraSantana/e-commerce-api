@@ -1,4 +1,6 @@
 const postgre = require('../database');
+const jwt = require('jsonwebtoken');
+const secret = 'ecommerce_secret';
 
 const userController = {
     getAll: async (req, res) => {
@@ -70,18 +72,19 @@ const userController = {
     authenticateUser: async (req, res) => {
         try {
             const { email, password } = req.body;
-
+    
             const query = 'SELECT * FROM users WHERE email = $1 AND password = $2';
             const { rows } = await postgre.query(query, [email, password]);
-
-
+    
             if (rows.length > 0) {
-                return res.status(200).send();
+                const user = rows[0];
+                const token = jwt.sign({ email: user.email, id: user.id_user }, secret, { expiresIn: '1h' });
+                return res.status(200).json({ token });
             } else {
                 return res.status(401).json({ msg: "Unauthorized" });
             }
         } catch (error) {
-            res.json({ msg: error.msg });
+            res.status(500).json({ msg: error.message });
         }
     }
 
