@@ -23,11 +23,11 @@ const productController = {
     },
     create: async(req, res) => {
         try {
-            const { title, description, currentPrice, mainimg, thumbnail } = req.body
+            const { title, description, category, currentPrice, mainimg, thumbnail } = req.body
 
-            const sql = 'INSERT INTO products(title, description, currentPrice, mainimg, thumbnail) VALUES($1, $2, $3, $4, $5) RETURNING *';
+            const sql = 'INSERT INTO products(title, description, category, currentPrice, mainimg, thumbnail) VALUES($1, $2, $3, $4, $5, $6) RETURNING *';
 
-            const { rows } = await postgre.query(sql, [title, description, currentPrice, mainimg, thumbnail]);
+            const { rows } = await postgre.query(sql, [title, description, category, currentPrice, mainimg, thumbnail]);
 
             res.json({msg: "OK", data: rows[0]})
 
@@ -37,11 +37,11 @@ const productController = {
     },
     updateById: async (req, res) => {
         try {
-            const { title, description, currentPrice, mainimg, thumbnail } = req.body;
+            const { title, description, category, currentPrice, mainimg, thumbnail } = req.body;
     
-            const sql = 'UPDATE products SET title = $1, description = $2, currentPrice = $3, mainimg = $4, thumbnail = $5 WHERE id_product = $6 RETURNING *';
+            const sql = 'UPDATE products SET title = $1, description = $2, category = $3, currentPrice = $4, mainimg = $5, thumbnail = $6 WHERE id_product = $7 RETURNING *';
     
-            const { rows } = await postgre.query(sql, [title, description, currentPrice, mainimg, thumbnail, req.params.id]);
+            const { rows } = await postgre.query(sql, [title, description, category, currentPrice, mainimg, thumbnail, req.params.id]);
     
             res.json({ msg: "OK", data: rows[0] });
         } catch (error) {
