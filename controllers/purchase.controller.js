@@ -3,18 +3,41 @@ const postgre = require('../database');
 const purchaseController = {
     createPurchase: async (req, res) => {
         try {
-            const { user_id, product_id, purchase_date, purchase_price, status } = req.body;
-
-            const sql = 'INSERT INTO sales(user_id, product_id, purchase_date, purchase_price, status) VALUES($1, $2, $3, $4, $5) RETURNING *';
-
-            const { rows } = await postgre.query(sql, [user_id, product_id, purchase_date, purchase_price, status]);
-
+            const { user_id, product_id, purchase_date, purchase_price, quantity, status } = req.body;
+    
+            if (!user_id || !product_id || !purchase_price) {
+                return res.status(400).json({ msg: "Missing required fields" });
+            }
+    
+            let sql = `
+                WITH new_purchase AS (
+                    INSERT INTO purchases (purchase_date)
+                    VALUES ($1)
+                    RETURNING id_purchase
+                )
+                INSERT INTO items (user_id, product_id, purchase_id, purchase_price, quantity, status)
+                SELECT
+                    $2 AS user_id,
+                    $3 AS product_id,
+                    new_purchase.id_purchase AS purchase_id,
+                    $4 AS purchase_price,
+                    $5 AS quantity,
+                    $6 AS status
+                FROM new_purchase
+                RETURNING *;
+            `;
+    
+            const values = [purchase_date || 'now()', user_id, product_id, purchase_price, quantity || 1, status || 'Esperando Pagamento'];
+    
+            const { rows } = await postgre.query(sql, values);
+    
             res.json({ msg: "OK", data: rows[0] });
-
+    
         } catch (error) {
             res.json({ msg: error.msg });
         }
     },
+    
 
     getAllPurchasesByUser: async (req, res) => {
         try {
