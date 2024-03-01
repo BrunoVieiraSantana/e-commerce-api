@@ -30,7 +30,14 @@ const purchaseController = {
             const values = [purchase_date || 'now()', user_id, product_id, purchase_price, quantity || 1, status || 'Esperando Pagamento'];
     
             const { rows } = await postgre.query(sql, values);
-    
+            
+            const updateStockQuery = `
+                UPDATE products 
+                SET stock = stock - $1 
+                WHERE id_product = $2;
+            `;
+            await postgre.query(updateStockQuery, [quantity, product_id]);
+
             res.json({ msg: "OK", data: rows[0] });
     
         } catch (error) {
