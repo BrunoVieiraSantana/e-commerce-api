@@ -70,16 +70,21 @@ const purchaseController = {
     getAllPurchasesByUser: async (req, res) => {
         try {
             const { user_id } = req.params;
-
+    
             console.log("User ID requested:", user_id);
-
+    
             const query = `
-                SELECT * FROM items
-                WHERE user_id = $1;
+                SELECT TO_CHAR(pu.purchase_date, 'DD/MM/YYYY') AS purchase_date_formatted, i.id_item, u.name AS user_name, p.title AS product_title, i.purchase_price, i.quantity, i.status
+                FROM items i
+                JOIN purchases pu ON i.purchase_id = pu.id_purchase
+                JOIN products p ON i.product_id = p.id_product
+                JOIN users u ON i.user_id = u.id_user
+                WHERE i.user_id = $1
+                ORDER BY pu.purchase_date;
             `;
-
+    
             const { rows: purchases } = await postgre.query(query, [user_id]);
-
+    
             res.json({ purchases });
         } catch (error) {
             console.error(error);
