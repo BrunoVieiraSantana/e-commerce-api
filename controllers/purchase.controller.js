@@ -4,16 +4,11 @@ const purchaseController = {
     createPurchase: async (req, res) => {
         try {
             const { user_id, product_id, purchase_date, purchase_price, quantity, status } = req.body;
-
-            if (!user_id || !product_id || !purchase_price || !quantity) {
+    
+            if (!user_id || !product_id || !purchase_price) {
                 return res.status(400).json({ msg: "Missing required fields" });
             }
-
-            const product = await postgre.query('SELECT stock FROM products WHERE id_product = $1', [product_id]);
-            if (!product.rows.length || product.rows[0].stock < quantity) {
-                return res.status(400).json({ msg: "Insufficient stock for the requested quantity" });
-            }
-
+    
             let sql = `
                 WITH new_purchase AS (
                     INSERT INTO purchases (purchase_date)
@@ -31,11 +26,11 @@ const purchaseController = {
                 FROM new_purchase
                 RETURNING *;
             `;
-
-            const values = [purchase_date || 'now()', user_id, product_id, purchase_price, quantity, status || 'Esperando Pagamento'];
-
+    
+            const values = [purchase_date || 'now()', user_id, product_id, purchase_price, quantity || 1, status || 'Esperando Pagamento'];
+    
             const { rows } = await postgre.query(sql, values);
-
+            
             const updateStockQuery = `
                 UPDATE products 
                 SET stock = stock - $1 
@@ -44,11 +39,12 @@ const purchaseController = {
             await postgre.query(updateStockQuery, [quantity, product_id]);
 
             res.json({ msg: "OK", data: rows[0] });
-
+    
         } catch (error) {
-            res.status(500).json({ msg: error.message });
+            res.json({ msg: error.msg });
         }
     },
+    
 
     getAllPurchasesByUser: async (req, res) => {
         try {
@@ -68,7 +64,7 @@ const purchaseController = {
             res.json({ msg: "OK", data: rows });
 
         } catch (error) {
-            res.status(500).json({ msg: error.message });
+            res.json({ msg: error.msg });
         }
     }
 };
