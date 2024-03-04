@@ -89,9 +89,6 @@ const userController = {
             res.status(500).json({ msg: "Erro interno do servidor" });
         }
     }
-    
-    
-    
 
 };
 

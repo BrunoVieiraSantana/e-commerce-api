@@ -5,7 +5,6 @@ const purchaseController = {
         try {
             const { user_id, product_id, purchase_price, quantity, status } = req.body;
 
-            // Check if there is enough stock
             const { rows: productRows } = await postgre.query("SELECT stock FROM products WHERE id_product = $1", [product_id]);
             const availableStock = productRows[0].stock;
 
@@ -13,10 +12,8 @@ const purchaseController = {
                 return res.status(400).json({ msg: "Not enough stock available" });
             }
 
-            // Start transaction
             await postgre.query('BEGIN');
 
-            // Create purchase
             const purchaseDate = new Date().toISOString();
             const purchaseQuery = `
                 INSERT INTO purchases (purchase_date)
@@ -27,7 +24,6 @@ const purchaseController = {
             const { rows: purchaseRows } = await postgre.query(purchaseQuery, purchaseValues);
             const purchaseId = purchaseRows[0].id_purchase;
 
-            // Associate items with the purchase
             const itemQuery = `
                 INSERT INTO items (user_id, product_id, purchase_id, purchase_price, quantity, status)
                 VALUES ($1, $2, $3, $4, $5, $6)
@@ -36,7 +32,6 @@ const purchaseController = {
             const itemValues = [user_id, product_id, purchaseId, purchase_price, quantity, status];
             const { rows: itemRows } = await postgre.query(itemQuery, itemValues);
 
-            // Update stock
             const updateStockQuery = `
                 UPDATE products 
                 SET stock = stock - $1 
@@ -44,13 +39,11 @@ const purchaseController = {
             `;
             await postgre.query(updateStockQuery, [quantity, product_id]);
 
-            // Commit transaction
             await postgre.query('COMMIT');
 
             res.json({ msg: "Purchase completed successfully", data: itemRows[0] });
 
         } catch (error) {
-            // Rollback in case of error
             await postgre.query('ROLLBACK');
             console.error(error);
             res.status(500).json({ msg: "Internal Server Error" });
@@ -58,7 +51,7 @@ const purchaseController = {
     },
 
     getAllPurchasesByUser: async (req, res) => {
-        // Implementation to get all purchases by user
+    
     }
 };
 
