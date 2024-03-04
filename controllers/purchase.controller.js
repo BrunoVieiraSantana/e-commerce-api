@@ -3,7 +3,12 @@ const postgre = require('../database');
 const purchaseController = {
     createPurchase: async (req, res) => {
         try {
-            const { user_id, Item: { cartItems } } = req.body;
+            const { user_id, cartItems } = req.body;
+            
+            if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
+                return res.status(400).json({ msg: "Cart items are missing or invalid" });
+            }
+
             console.log(`User ID: ${user_id}, Cart Items:`, cartItems);
 
             await postgre.query('BEGIN');
@@ -12,6 +17,12 @@ const purchaseController = {
                 const { name, price, qty, subTotal, thumbnail, id } = cartItem;
 
                 const { rows: productRows } = await postgre.query("SELECT id_product, stock FROM products WHERE name = $1", [name]);
+                
+                if (!productRows || productRows.length === 0) {
+                    await postgre.query('ROLLBACK');
+                    return res.status(400).json({ msg: `Product '${name}' not found in the database` });
+                }
+                
                 const { id_product, stock } = productRows[0];
 
                 if (qty > stock) {
