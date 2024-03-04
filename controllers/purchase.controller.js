@@ -5,16 +5,7 @@ const purchaseController = {
         try {
             const { user_id, product_id, purchase_price, quantity, status } = req.body;
 
-            // Consulta para obter o estoque disponível do produto
-            const query = "SELECT stock FROM products WHERE id_product = $1";
-            const { rows: productRows } = await postgre.query(query, [product_id]);
-
-            // Verificar se há resultados da consulta
-            if (productRows.length === 0) {
-                return res.status(404).json({ msg: "Product not found" });
-            }
-
-            // Obter o estoque disponível
+            const { rows: productRows } = await postgre.query("SELECT stock FROM products WHERE id_product = $1", [product_id]);
             const availableStock = productRows[0].stock;
 
             if (quantity > availableStock) {
@@ -60,16 +51,7 @@ const purchaseController = {
     },
 
     getAllPurchasesByUser: async (req, res) => {
-        try {
-            const { user_id } = req.params;
-
-            const { rows: purchases } = await postgre.query("SELECT * FROM purchases WHERE user_id = $1", [user_id]);
-
-            res.json({ purchases });
-        } catch (error) {
-            console.error(error);
-            res.status(500).json({ msg: "Internal Server Error" });
-        }
+    
     }
 };
 

@@ -6,7 +6,7 @@ const secret = 'ecommerce_secret';
 const verifyToken = (req, res, next) => {
     const token = req.headers['authorization'];
 
-    const publicRoutes = ['/authenticate', '/', '/create', '/api/v1/purchases']; 
+    const publicRoutes = ['/authenticate', '/', '/create']; 
 
     if (publicRoutes.includes(req.path)) {
         return next(); 
