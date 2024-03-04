@@ -3,11 +3,18 @@ const postgre = require('../database');
 const purchaseController = {
     createPurchase: async (req, res) => {
         try {
-            console.log("Dados recebidos na solicitação:", req.body); // Adiciona este log para verificar os dados recebidos
-
             const { user_id, product_id, purchase_price, quantity, status } = req.body;
 
-            const { rows: productRows } = await postgre.query("SELECT stock FROM products WHERE id_product = $1", [product_id]);
+            // Consulta para obter o estoque disponível do produto
+            const query = "SELECT stock FROM products WHERE id_product = $1";
+            const { rows: productRows } = await postgre.query(query, [product_id]);
+
+            // Verificar se há resultados da consulta
+            if (productRows.length === 0) {
+                return res.status(404).json({ msg: "Product not found" });
+            }
+
+            // Obter o estoque disponível
             const availableStock = productRows[0].stock;
 
             if (quantity > availableStock) {
