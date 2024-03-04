@@ -4,7 +4,7 @@ const purchaseController = {
     createPurchase: async (req, res) => {
         try {
             const { user_id, product_id, purchase_price, quantity, status } = req.body;
-            console.log(`pi: ${product_id} ui:${user_id} ui:${purchase_price} ui:${quantity} ui:${status}`)
+            console.log(`pi: ${product_id} ui:${user_id} ui:${purchase_price} ui:${quantity} ui:${status} body:${req.body}`)
 
             const { rows: productRows } = await postgre.query("SELECT stock FROM products WHERE id_product = $1", [product_id]);
             
