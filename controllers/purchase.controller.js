@@ -1,4 +1,3 @@
-// purchase.controller.js
 const postgre = require('../database');
 
 const purchaseController = {
@@ -6,19 +5,13 @@ const purchaseController = {
         try {
             const { user_id, product_id, purchase_date, purchase_price, quantity, status } = req.body;
 
-            if (!user_id || !product_id || !purchase_price) {
+            if (!user_id || !product_id || !purchase_price || !quantity) {
                 return res.status(400).json({ msg: "Missing required fields" });
             }
 
-            const checkStockQuery = `
-                SELECT stock FROM products WHERE id_product = $1;
-            `;
-            const { rows: stockData } = await postgre.query(checkStockQuery, [product_id]);
-
-            const currentStock = stockData[0].stock;
-
-            if (currentStock < quantity) {
-                return res.status(400).json({ msg: "Insufficient stock" });
+            const product = await postgre.query('SELECT stock FROM products WHERE id_product = $1', [product_id]);
+            if (!product.rows.length || product.rows[0].stock < quantity) {
+                return res.status(400).json({ msg: "Insufficient stock for the requested quantity" });
             }
 
             let sql = `
@@ -39,7 +32,7 @@ const purchaseController = {
                 RETURNING *;
             `;
 
-            const values = [purchase_date || 'now()', user_id, product_id, purchase_price, quantity || 1, status || 'Esperando Pagamento'];
+            const values = [purchase_date || 'now()', user_id, product_id, purchase_price, quantity, status || 'Esperando Pagamento'];
 
             const { rows } = await postgre.query(sql, values);
 
@@ -51,6 +44,28 @@ const purchaseController = {
             await postgre.query(updateStockQuery, [quantity, product_id]);
 
             res.json({ msg: "OK", data: rows[0] });
+
+        } catch (error) {
+            res.status(500).json({ msg: error.message });
+        }
+    },
+
+    getAllPurchasesByUser: async (req, res) => {
+        try {
+            const { user_id } = req.params;
+
+            const sql = `SELECT to_char(p.purchase_date, 'DD/MM/YYYY') AS purchase_date_formatted,
+                                pr.title AS product_name,
+                                i.purchase_price AS product_price,
+                                i.status AS payment_status
+                         FROM sales p
+                         JOIN items i ON p.id_sale = i.sale_id
+                         JOIN products pr ON i.product_id = pr.id_product
+                         WHERE p.user_id = $1`;
+
+            const { rows } = await postgre.query(sql, [user_id]);
+
+            res.json({ msg: "OK", data: rows });
 
         } catch (error) {
             res.status(500).json({ msg: error.message });
