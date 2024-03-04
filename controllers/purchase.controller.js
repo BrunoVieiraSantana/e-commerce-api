@@ -6,6 +6,11 @@ const purchaseController = {
             const { user_id, product_id, purchase_price, quantity, status } = req.body;
 
             const { rows: productRows } = await postgre.query("SELECT stock FROM products WHERE id_product = $1", [product_id]);
+            
+            if (!productRows || !productRows.length) {
+                return res.status(404).json({ msg: "Product not found" });
+            }
+
             const availableStock = productRows[0].stock;
 
             if (quantity > availableStock) {
@@ -51,7 +56,16 @@ const purchaseController = {
     },
 
     getAllPurchasesByUser: async (req, res) => {
-    
+        try {
+            const { user_id } = req.params;
+
+            const { rows: purchases } = await postgre.query("SELECT * FROM purchases WHERE user_id = $1", [user_id]);
+
+            res.json({ purchases });
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ msg: "Internal Server Error" });
+        }
     }
 };
 
