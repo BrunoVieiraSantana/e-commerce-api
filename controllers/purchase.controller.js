@@ -58,6 +58,8 @@ const purchaseController = {
         try {
             const { user_id } = req.params;
 
+            console.log("User ID requested:", user_id);
+
             const query = `
                 SELECT * FROM items
                 WHERE user_id = $1;
