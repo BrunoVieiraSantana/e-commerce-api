@@ -73,26 +73,23 @@ const userController = {
         try {
             const { email, password } = req.body;
     
-            const query = 'SELECT * FROM users WHERE email = $1 AND password = $2';
+            const query = 'SELECT id_user, name, email FROM users WHERE email = $1 AND password = $2';
             const { rows } = await postgre.query(query, [email, password]);
-    
-            console.log("Rows:", rows); 
     
             if (rows.length > 0) {
                 const user = rows[0];
-                console.log("User:", user); 
-    
                 const token = jwt.sign({ email: user.email, id: user.id_user, name: user.name }, secret, { expiresIn: '1h' });
     
-                return res.status(200).json({ token, name: user.name });
+                return res.status(200).json({ token, name: user.name, id: user.id_user });
             } else {
-                return res.status(401).json({ msg: "Unauthorized" });
+                return res.status(401).json({ msg: "Não autorizado" });
             }
         } catch (error) {
             console.error(error);
-            res.status(500).json({ msg: "Internal Server Error" });
+            res.status(500).json({ msg: "Erro interno do servidor" });
         }
     }
+    
     
     
 
