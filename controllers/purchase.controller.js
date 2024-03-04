@@ -16,7 +16,7 @@ const purchaseController = {
             for (const cartItem of cartItems) {
                 const { name, price, qty, subTotal, thumbnail, id } = cartItem;
 
-                const { rows: productRows } = await postgre.query("SELECT id_product, stock FROM products WHERE name = $1", [name]);
+                const { rows: productRows } = await postgre.query("SELECT id_product, stock FROM products WHERE id_product = $1", [id]);
                 
                 if (!productRows || productRows.length === 0) {
                     await postgre.query('ROLLBACK');
