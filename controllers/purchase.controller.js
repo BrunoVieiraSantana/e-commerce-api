@@ -3,49 +3,51 @@ const postgre = require('../database');
 const purchaseController = {
     createPurchase: async (req, res) => {
         try {
-            const { user_id, ...item } = req.body;
-            console.log(`User ID: ${user_id}, Item:`, item);
-
-            const { product_id, purchase_price, quantity, status } = item;
-
-            const { rows: productRows } = await postgre.query("SELECT stock FROM products WHERE id_product = $1", [product_id]);
-            
-            const availableStock = productRows[0].stock;
-
-            if (quantity > availableStock) {
-                return res.status(400).json({ msg: "Not enough stock available" });
-            }
+            const { user_id, Item: { cartItems } } = req.body;
+            console.log(`User ID: ${user_id}, Cart Items:`, cartItems);
 
             await postgre.query('BEGIN');
 
-            const purchaseDate = new Date().toISOString();
-            const purchaseQuery = `
-                INSERT INTO purchases (purchase_date)
-                VALUES ($1)
-                RETURNING id_purchase
-            `;
-            const purchaseValues = [purchaseDate];
-            const { rows: purchaseRows } = await postgre.query(purchaseQuery, purchaseValues);
-            const purchaseId = purchaseRows[0].id_purchase;
+            for (const cartItem of cartItems) {
+                const { name, price, qty, subTotal, thumbnail, id } = cartItem;
 
-            const itemQuery = `
-                INSERT INTO items (user_id, product_id, purchase_id, purchase_price, quantity, status)
-                VALUES ($1, $2, $3, $4, $5, $6)
-                RETURNING *
-            `;
-            const itemValues = [user_id, product_id, purchaseId, purchase_price, quantity, status];
-            const { rows: itemRows } = await postgre.query(itemQuery, itemValues);
+                const { rows: productRows } = await postgre.query("SELECT id_product, stock FROM products WHERE name = $1", [name]);
+                const { id_product, stock } = productRows[0];
 
-            const updateStockQuery = `
-                UPDATE products 
-                SET stock = stock - $1 
-                WHERE id_product = $2;
-            `;
-            await postgre.query(updateStockQuery, [quantity, product_id]);
+                if (qty > stock) {
+                    await postgre.query('ROLLBACK');
+                    return res.status(400).json({ msg: `Not enough stock available for ${name}` });
+                }
+
+                const purchaseDate = new Date().toISOString();
+                const purchaseQuery = `
+                    INSERT INTO purchases (purchase_date)
+                    VALUES ($1)
+                    RETURNING id_purchase
+                `;
+                const purchaseValues = [purchaseDate];
+                const { rows: purchaseRows } = await postgre.query(purchaseQuery, purchaseValues);
+                const purchaseId = purchaseRows[0].id_purchase;
+
+                const itemQuery = `
+                    INSERT INTO items (user_id, product_id, purchase_id, purchase_price, quantity, status)
+                    VALUES ($1, $2, $3, $4, $5, $6)
+                    RETURNING *
+                `;
+                const itemValues = [user_id, id_product, purchaseId, price, qty, 'pending'];
+                const { rows: itemRows } = await postgre.query(itemQuery, itemValues);
+
+                const updateStockQuery = `
+                    UPDATE products 
+                    SET stock = stock - $1 
+                    WHERE id_product = $2;
+                `;
+                await postgre.query(updateStockQuery, [qty, id_product]);
+            }
 
             await postgre.query('COMMIT');
 
-            res.json({ msg: "Purchase completed successfully", data: itemRows[0] });
+            res.json({ msg: "Purchase completed successfully" });
 
         } catch (error) {
             await postgre.query('ROLLBACK');
