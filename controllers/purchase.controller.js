@@ -5,7 +5,10 @@ const purchaseController = {
         try {
             const { user_id, cartItems } = req.body;
             
+            console.log("Received request body:", req.body);
+
             if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
+                console.log("Invalid cart items:", cartItems);
                 return res.status(400).json({ msg: "Cart items are missing or invalid" });
             }
 
@@ -16,10 +19,13 @@ const purchaseController = {
             for (const cartItem of cartItems) {
                 const { name, price, qty, subTotal, thumbnail, id } = cartItem;
 
+                console.log("Processing cart item:", cartItem);
+
                 const { rows: productRows } = await postgre.query("SELECT id_product, stock FROM products WHERE id_product = $1", [id]);
                 
                 if (!productRows || productRows.length === 0) {
                     await postgre.query('ROLLBACK');
+                    console.log(`Product '${name}' not found in the database`);
                     return res.status(400).json({ msg: `Product '${name}' not found in the database` });
                 }
                 
@@ -27,10 +33,12 @@ const purchaseController = {
 
                 if (qty > stock) {
                     await postgre.query('ROLLBACK');
+                    console.log(`Not enough stock available for ${name}`);
                     return res.status(400).json({ msg: `Not enough stock available for ${name}` });
                 }
 
                 const purchaseDate = new Date().toISOString();
+                console.log("Creating purchase with date:", purchaseDate);
                 const purchaseQuery = `
                     INSERT INTO purchases (purchase_date)
                     VALUES ($1)
@@ -46,7 +54,7 @@ const purchaseController = {
                     RETURNING *
                 `;
                 const itemValues = [user_id, id_product, purchaseId, price, qty, 'Esperando Pagamento'];
-                console.log("itemValues:", itemValues);
+                console.log("Item values:", itemValues);
                 const { rows: itemRows } = await postgre.query(itemQuery, itemValues);
 
                 const updateStockQuery = `
@@ -55,15 +63,17 @@ const purchaseController = {
                     WHERE id_product = $2;
                 `;
                 await postgre.query(updateStockQuery, [qty, id_product]);
+                console.log(`Stock updated for product ${id_product}`);
             }
 
             await postgre.query('COMMIT');
+            console.log("Transaction committed successfully");
 
             res.json({ msg: "Purchase completed successfully" });
 
         } catch (error) {
             await postgre.query('ROLLBACK');
-            console.error(error);
+            console.error("Error occurred:", error);
             res.status(500).json({ msg: "Internal Server Error" });
         }
     },
@@ -89,7 +99,7 @@ const purchaseController = {
     
             res.json({ purchases });
         } catch (error) {
-            console.error(error);
+            console.error("Error occurred:", error);
             res.status(500).json({ msg: "Internal Server Error" });
         }
     }
