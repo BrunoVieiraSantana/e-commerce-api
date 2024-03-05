@@ -3,14 +3,17 @@ const postgre = require('../database');
 const purchaseController = {
     createPurchase: async (req, res) => {
         try {
-            const { user_id, cartItems } = req.body;
+            const { user_id, name, price, qty, subTotal, thumbnail, id } = req.body;
             
             console.log("Received request body:", req.body);
 
-            if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
-                console.log("Invalid cart items:", cartItems);
-                return res.status(400).json({ msg: "Cart items are missing or invalid" });
+            if (!user_id || !name || !price || !qty || !subTotal || !thumbnail || !id) {
+                console.log("Missing required fields in request body");
+                return res.status(400).json({ msg: "Missing required fields in request body" });
             }
+
+            const cartItem = { name, price, qty, subTotal, thumbnail, id };
+            const cartItems = [cartItem];
 
             console.log(`User ID: ${user_id}, Cart Items:`, cartItems);
 
