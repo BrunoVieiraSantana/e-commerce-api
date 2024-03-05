@@ -46,6 +46,7 @@ const purchaseController = {
                     RETURNING *
                 `;
                 const itemValues = [user_id, id_product, purchaseId, price, qty, 'Esperando Pagamento'];
+                console.log("itemValues:", itemValues);
                 const { rows: itemRows } = await postgre.query(itemQuery, itemValues);
 
                 const updateStockQuery = `
@@ -84,6 +85,7 @@ const purchaseController = {
             `;
     
             const { rows: purchases } = await postgre.query(query, [user_id]);
+            console.log("Purchases:", purchases);
     
             res.json({ purchases });
         } catch (error) {
